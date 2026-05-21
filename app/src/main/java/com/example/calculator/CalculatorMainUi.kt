@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,111 +23,137 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyHorizontalGrid
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.twotone.ExitToApp
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 @Composable
-fun CalculatorMainUi( ){
-    var Numbers = listOf<Int>(
-        1, 2, 3, 4, 5, 6, 7, 8, 9,0
-    )
-    var Opraions = listOf<String>(
-        "+","-","/","*"
-    )
-    val viewModel = viewModel<CalcViewModel>()
+fun CalculatorMainUi() {
 
-    val display = viewModel.maindisplay.observeAsState("")
+    val viewModel = viewModel<CalcViewModel>()
+    val display = viewModel.maindisplay.observeAsState("0")
+
+    val buttons = listOf(
+        "C", "⌫", "%", "/",
+        "7", "8", "9", "×",
+        "4", "5", "6", "-",
+        "1", "2", "3", "+",
+        ".", "0", "=", "Ans"
+    )
 
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color.White)
+            .background(Color(0xFF101010))
+            .padding(16.dp),
+        verticalArrangement = Arrangement.SpaceBetween
     ) {
 
 
-        Box(
+        Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .fillMaxHeight(.3f)
-                .background(Color.Black),
-            contentAlignment = Alignment.CenterStart
+                .weight(1f),
+            verticalArrangement = Arrangement.Bottom,
+            horizontalAlignment = Alignment.End
         ) {
+
             Text(
                 text = display.value,
-                fontSize = 40.sp,
-                color = Color.White
+                fontSize = 52.sp,
+                color = Color.White,
+                modifier = Modifier.padding(16.dp)
             )
         }
-        Spacer(Modifier.size(20.dp))
 
-        Row() {
-            LazyHorizontalGrid(
-                rows = GridCells.Fixed(4),
-                modifier = Modifier.size(200.dp).padding(start = 20.dp) ,
-                verticalArrangement = Arrangement.spacedBy(10.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
+        LazyVerticalGrid(
+            columns = GridCells.Fixed(4),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+        ) {
 
-            ) {
-                items(Numbers) { number ->
-                    CalcButton(operation = number) {
-                        viewModel.append(number)
+            items(buttons) { button ->
+
+                if (button.isNotEmpty()) {
+
+                    val buttonColor = when (button) {
+                        "C", "⌫", "%" -> Color(0xFFA5A5A5)
+                         "/", "×", "-", "+", "=" ,"Ans"-> Color(0xFFFF9F0A)
+                        else -> Color(0xFF333333)
+                    }
+
+                    val textColor = when (button) {
+                        "C", "⌫", "%" -> Color.Black
+                        else -> Color.White
+                    }
+
+                    Box(
+                        modifier = Modifier
+                            .size(85.dp)
+                            .background(
+                                color = buttonColor,
+                                shape = CircleShape
+                            )
+                            .clickable {
+
+                              when(button){
+                                  ".","1" , "2" ,"3",  "4" , "5" ,"6",  "7" , "8" ,"9" , "0"->{
+                                      viewModel.append(button)
+                                  }
+                                  "⌫" ->{
+                                      viewModel.clearLast()
+                                  }
+                                  "C"->{
+                                      viewModel.clear()
+                                  }
+                                  "="->{
+                                      viewModel.calculate()
+                                      println(viewModel.LH )
+                                      println(viewModel.RH)
+                                   }
+                                  "Ans" ->{
+                                      viewModel.useAns()
+                                  }
+
+                                  else -> {
+                                      viewModel.operationClick(button)
+                                  }
+
+
+
+                              }
+
+                            },
+                        contentAlignment = Alignment.Center
+                    ) {
+
+                        Text(
+                            text = button,
+                            fontSize = 28.sp,
+                            color = textColor
+                        )
                     }
                 }
-            }
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(1),
-                modifier = Modifier.fillMaxWidth(.3f).height(200.dp) ,
-                verticalArrangement = Arrangement.spacedBy(2.dp),
-                horizontalArrangement = Arrangement.spacedBy(10.dp),
-
-            ) {
-                items(Opraions) { operation ->
-                    CalcOperation(operation = operation) {
-                        viewModel.operationClick(operation)
-                    }
-                }
-            }
-            Spacer(modifier = Modifier.size(20.dp))
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(50.dp)
-                    .background(Color.Black)
-                    .clickable {
-                        viewModel.calculate()
-
-                    }
-            ) {
-                Text(
-                    text = "=" ,
-                    color = Color.White
-                )
-            }
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .size(50.dp)
-                    .background(Color.Black)
-                    .clickable { viewModel.clear() }
-            ) {
-                Text(
-                    text = "C" ,
-                    color = Color.White
-                )
             }
         }
-
-
-
     }
-
-
 }
+
+
+
+
